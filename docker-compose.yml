@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+
+  backend:
+    build: ./Backend
+    container_name: agrivision-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./Backend:/app
+      - agrivision_db:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/agrivision.db
+      - SECRET_KEY=${SECRET_KEY:-agrivision-change-me-in-production}
+      - DEBUG=${DEBUG:-false}
+      - FRONTEND_URL=http://localhost
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./Frontend
+    container_name: agrivision-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  agrivision_db:
